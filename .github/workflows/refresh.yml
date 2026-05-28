@@ -1,0 +1,64 @@
+# Daily refresh of the SBI TT rate CSVs.
+#
+# Runs fetcher.py, which downloads the full upstream history and
+# rewrites the four CSVs under data/. If anything changed, the
+# workflow commits and pushes the new files back to this repo.
+#
+# Because the upstream file always contains the full history, the
+# scheduled run also serves as the backfill: any day missed (e.g. if
+# GitHub Actions had an outage) is filled in automatically on the
+# next successful run.
+
+name: refresh-rates
+
+on:
+  schedule:
+    # 13:30 UTC = 19:00 IST. SBI publishes new TT rates in the
+    # late afternoon IST, so 19:00 IST is comfortably after.
+    - cron: "30 13 * * *"
+  # Allow manual triggering from the Actions tab.
+  workflow_dispatch:
+  # Also run on pushes to main so the data is refreshed whenever
+  # code or the workflow itself changes.
+  push:
+    branches: [main]
+
+# The default GITHUB_TOKEN needs write access to push commits back.
+permissions:
+  contents: write
+
+# If a new run is queued while one is in progress, drop the older one.
+concurrency:
+  group: refresh-rates
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch latest rates
+        run: python fetcher.py
+
+      - name: Commit and push if data changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -z "$(git status --porcelain data/)" ]; then
+            echo "No changes."
+            exit 0
+          fi
+          git add data/
+          git commit -m "data: refresh $(date -u +%Y-%m-%d)"
+          git push
