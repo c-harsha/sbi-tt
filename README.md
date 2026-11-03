@@ -48,7 +48,13 @@ ls data/
 
 ## Changelog
 
-### v0.4.0 — current
+### v0.4.1 — current
+- Docs only. No code or data changes.
+- Rewrote `CLAUDE.md` as a self-contained guide for setting the project up on a new machine: setup steps, what `git clone` doesn't carry, workflow behaviour, the CSV format contract and troubleshooting.
+- Corrected the data notes: SBI publishes on the 1st, 3rd and 5th Saturdays of each month, and the upstream mirror has one Sunday row (2026-09-27), which is passed through as-is.
+- Clarified that the pre-v0.4.0 code is not in this repo's git history. This changelog is the only record of it.
+
+### v0.4.0
 - Switched the publishing surface from a self-hosted Flask server to **GitHub Pages-style raw URLs** backed by a daily GitHub Actions workflow.
 - Removed: Flask server, Dockerfile, docker-compose, GitLab CI pipeline, in-container scheduler. The repo no longer needs any infrastructure.
 
